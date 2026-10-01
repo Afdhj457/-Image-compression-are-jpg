@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>图片画质调整 · 分辨率(质量)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        html, body {
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+            position: fixed;
+        }
+        body {
+            background: #f5f7fb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            margin: 0;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.25);
+            max-width: 1100px;
+            width: 100%;
+            max-height: 96vh;
+            padding: 24px 28px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #b8cae0 #f0f4fa;
+        }
+        .card::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card::-webkit-scrollbar-track {
+            background: #f0f4fa;
+            border-radius: 10px;
+        }
+        .card::-webkit-scrollbar-thumb {
+            background: #b8cae0;
+            border-radius: 10px;
+        }
+        h1 {
+            font-size: 1.7rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: #0b1b2b;
+            margin-top: 0;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        h1 span {
+            background: #eef3fc;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 30px;
+            color: #2d5f9a;
+        }
+        .subhead {
+            color: #5e6f8d;
+            margin-bottom: 18px;
+            font-size: 0.95rem;
+            border-left: 3px solid #2d5f9a;
+            padding-left: 16px;
+        }
+        .grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+        .controls-panel {
+            flex: 1.1;
+            min-width: 280px;
+        }
+        .preview-panel {
+            flex: 1.4;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .file-upload-area {
+            background: #f8fafd;
+            border: 2px dashed #b8cae0;
+            border-radius: 20px;
+            padding: 22px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+        .file-upload-area:hover {
+            background: #eef4ff;
+            border-color: #2d5f9a;
+        }
+        .file-upload-area input[type="file"] {
+            display: none;
+        }
+        .upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: #2d5f9a;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .upload-label svg {
+            width: 38px;
+            height: 38px;
+            stroke: #2d5f9a;
+            fill: none;
+            stroke-width: 1.8;
+        }
+        .upload-label .small {
+            font-size: 0.8rem;
+            color: #6c7d9c;
+            font-weight: 400;
+        }
+        .control-group {
+            background: #f8fafd;
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 18px;
+            border: 1px solid #e3e9f2;
+        }
+        .control-group .group-title {
+            font-weight: 600;
+            color: #1e2e45;
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .control-group .group-title .hint {
+            font-weight: 400;
+            font-size: 0.78rem;
+            color: #6c7d9c;
+            background: #eef3fc;
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+        /* 画质滑块 */
+        .quality-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .quality-header .label {
+            font-weight: 500;
+            color: #1e2e45;
+            font-size: 0.9rem;
+        }
+        .quality-header .value-badge {
+            background: #ffffff;
+            padding: 4px 14px;
+            border-radius: 30px;
+            border: 1px solid #cfddee;
+            font-weight: 600;
+            color: #1e3a6b;
+            font-size: 0.95rem;
+            min-width: 62px;
+            text-align: center;
+        }
+        .quality-header .value-badge.low {
+            color: #c0392b;
+            border-color: #e6b0aa;
+            background: #fdedec;
+        }
+        .quality-header .value-badge.medium {
+            color: #b9770e;
+            border-color: #f5cba7;
+            background: #fef5e7;
+        }
+        .quality-header .value-badge.high {
+            color: #1e8449;
+            border-color: #a9dfbf;
+            background: #eafaf1;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 4px 0 6px;
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type="range"]:focus {
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 10px;
+            background: linear-gradient(to right, #e74c3c, #f39c12, #27ae60);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #2d5f9a;
+            border-radius: 50%;
+            margin-top: -8px;
+            box-shadow: 0 2px 8px rgba(45, 95, 154, 0.5);
+            cursor: pointer;
+            transition: 0.1s;
+            border: 3px solid white;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #1e4a7a;
+        }
+        .quality-scale {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #8899b0;
+            padding: 0 4px;
+        }
+        .quality-desc {
+            margin-top: 12px;
+            font-size: 0.82rem;
+            color: #5e6f8d;
+            background: #eef3fc;
+            padding: 10px 14px;
+            border-radius: 12px;
+            line-height: 1.5;
+        }
+        .quality-desc strong {
+            color: #2d5f9a;
+        }
+        .file-size-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e3e9f2;
+            font-size: 0.85rem;
+        }
+        .file-size-row .fs-label {
+            color: #5e6f8d;
+        }
+        .file-size-row .fs-value {
+            font-weight: 600;
+            color: #1e3a6b;
+        }
+        .file-size-row .fs-value.smaller {
+            color: #27ae60;
+        }
+        .file-size-row .fs-value.larger {
+            color: #e67e22;
+        }
+        .reset-btn {
+            background: #ffffff;
+            border: 1px solid #cfddee;
+            border-radius: 40px;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #2d5f9a;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .reset-btn:hover {
+            background: #eef3fc;
+            border-color: #2d5f9a;
+        }
+        .reset-btn:active {
+            transform: scale(0.98);
+        }
+        .preview-container {
+            background: #f0f4fa;
+            border-radius: 24px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dfe8f3;
+            position: relative;
+            height: 340px;
+            overflow: hidden;
+        }
+        #previewCanvas {
+            display: block;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.2);
+            background: #ffffff;
+        }
+        .empty-preview {
+            text-align: center;
+            color: #8899b0;
+            font-size: 0.95rem;
+            padding: 30px 16px;
+        }
+        .empty-preview svg {
+            width: 48px;
+            height: 48px;
+            stroke: #b8cae0;
+            fill: none;
+            margin-bottom: 10px;
+            stroke-width: 1.5;
+        }
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #3b4e6b;
+            background: #f8fafd;
+            padding: 10px 16px;
+            border-radius: 16px;
+            border: 1px solid #e3e9f2;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .info-bar .badge {
+            background: #e3e9f2;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-weight: 500;
+            color: #1e3a6b;
+            font-size: 0.82rem;
+        }
+        .hidden {
+            display: none;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .btn-primary, .btn-save {
+            border: none;
+            border-radius: 40px;
+            padding: 12px 22px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(45, 95, 154, 0.3);
+        }
+        .btn-primary {
+            background: #2d5f9a;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1e4a7a;
+            box-shadow: 0 6px 16px rgba(45, 95, 154, 0.4);
+        }
+        .btn-save {
+            background: #27ae60;
+            color: white;
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+        .btn-save:hover {
+            background: #1e8e4f;
+            box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+        }
+        .btn-primary:active, .btn-save:active {
+            transform: scale(0.98);
+        }
+        .btn-primary:disabled, .btn-save:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            box-shadow: none;
+        }
+        .footer-note {
+            margin-top: 14px;
+            font-size: 0.8rem;
+            color: #8899b0;
+            text-align: center;
+        }
+        .format-note {
+            font-size: 0.78rem;
+            color: #8899b0;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>
+        🖼️ 图片画质调整
+        <span>分辨率 = 质量</span>
+    </h1>
+    <div class="subhead">保持图片像素尺寸不变，只调整输出画质（压缩质量），图片视觉大小完全不变</div>
+
+    <div class="grid">
+        <!-- 左侧控制区 -->
+        <div class="controls-panel">
+            <div class="file-upload-area" id="uploadArea">
+                <input type="file" id="imageInput" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif, image/bmp">
+                <label for="imageInput" class="upload-label">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span>点击选择图片</span>
+                    <span class="small">支持 PNG, JPG, WEBP, GIF, BMP</span>
+                </label>
+            </div>
+
+            <!-- 画质调节 -->
+            <div class="control-group">
+                <div class="group-title">
+                    🎚️ 调整画质
+                    <span class="hint">压缩质量</span>
+                </div>
+
+                <div class="quality-header">
+                    <span class="label">输出质量</span>
+                    <span class="value-badge high" id="qualityValue">92%</span>
+                </div>
+                <input type="range" id="qualitySlider" min="1" max="100" value="92" step="1">
+                <div class="quality-scale">
+                    <span>1% (最差)</span>
+                    <span>50%</span>
+                    <span>100% (最好)</span>
+                </div>
+
+                <div class="quality-desc" id="qualityDesc">
+                    <strong>高质量</strong> · 画面清晰细腻，文件较大
+                </div>
+
+                <div class="file-size-row">
+                    <span class="fs-label">预估文件大小</span>
+                    <span class="fs-value" id="fileSizeValue">—</span>
+                </div>
+                <div class="format-note" id="formatNote">
+                    ⚠️ 输出格式：JPEG（PNG 不支持有损压缩，将转为 JPEG）
+                </div>
+            </div>
+
+            <button class="reset-btn" id="resetBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                </svg>
+                重置为最高画质
+            </button>
+        </div>
+
+        <!-- 右侧预览区 -->
+        <div class="preview-panel">
+            <div class="preview-container" id="previewContainer">
+                <canvas id="previewCanvas" class="hidden"></canvas>
+                <div class="empty-preview" id="emptyPreview">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" fill="#b8cae0" stroke="none" />
+                        <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <p>尚未上传图片</p>
+                </div>
+            </div>
+
+            <div class="info-bar">
+                <span>图片信息</span>
+                <span class="badge" id="currentSizeBadge">— × —</span>
+                <span class="badge" id="currentQualityBadge">质量 —</span>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-primary" id="downloadBtn" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    下载调整后图片
+                </button>
+                <button class="btn-save" id="saveBtn" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                    保存图片
+                </button>
+            </div>
+            <div class="footer-note">
+                ⚡ 像素尺寸保持不变 · 只改变压缩质量 · 图片视觉大小完全不变
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const imageInput = document.getElementById('imageInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const emptyPreview = document.getElementById('emptyPreview');
+        const qualitySlider = document.getElementById('qualitySlider');
+        const qualityValue = document.getElementById('qualityValue');
+        const qualityDesc = document.getElementById('qualityDesc');
+        const fileSizeValue = document.getElementById('fileSizeValue');
+        const formatNote = document.getElementById('formatNote');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const currentSizeBadge = document.getElementById('currentSizeBadge');
+        const currentQualityBadge = document.getElementById('currentQualityBadge');
+        const previewContainer = document.getElementById('previewContainer');
+
+        let originalImage = null;
+        let originalWidth = 0;
+        let originalHeight = 0;
+
+        setControlsEnabled(false);
+
+        function setControlsEnabled(enabled) {
+            const controls = [qualitySlider, resetBtn, downloadBtn, saveBtn];
+            controls.forEach(el => {
+                if (enabled) {
+                    el.removeAttribute('disabled');
+                } else {
+                    el.setAttribute('disabled', 'disabled');
+                }
+            });
+            if (!enabled) {
+                downloadBtn.disabled = true;
+                saveBtn.disabled = true;
+            }
+        }
+
+        // 获取画质描述
+        function getQualityDesc(q) {
+            if (q <= 20) return { text: '<strong>极低质量</strong> · 严重压缩，明显马赛克，文件极小', cls: 'low' };
+            if (q <= 40) return { text: '<strong>低质量</strong> · 压缩明显，细节损失较多，文件小', cls: 'low' };
+            if (q <= 60) return { text: '<strong>中等质量</strong> · 平衡画质与大小，日常够用', cls: 'medium' };
+            if (q <= 80) return { text: '<strong>良好质量</strong> · 画面清晰，细节保留不错', cls: 'high' };
+            if (q <= 95) return { text: '<strong>高质量</strong> · 画面清晰细腻，文件较大', cls: 'high' };
+            return { text: '<strong>极高质量</strong> · 几乎无损，文件最大', cls: 'high' };
+        }
+
+        // 格式化文件大小
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        // 核心：只改变画质，不改变像素尺寸
+        function renderPreview() {
+            if (!originalImage) return;
+
+            const quality = parseInt(qualitySlider.value, 10) / 100;
+
+            // 画布尺寸 = 原始像素尺寸（保持不变）
+            previewCanvas.width = originalWidth;
+            previewCanvas.height = originalHeight;
+            const ctx = previewCanvas.getContext('2d');
+            ctx.clearRect(0, 0, originalWidth, originalHeight);
+            ctx.drawImage(originalImage, 0, 0);
+
+            // 模拟低画质效果（用于预览视觉反馈）
+            // 通过将图片以低质量导出再重新绘制，让用户看到画质变化
+            if (quality < 1) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = originalWidth;
+                tempCanvas.height = originalHeight;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(originalImage, 0, 0);
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    ctx.clearRect(0, 0, originalWidth, originalHeight);
+                    ctx.drawImage(tempImg, 0, 0);
+                };
+                tempImg.src = dataUrl;
+            }
+
+            // 显示尺寸固定（基于容器，视觉大小不变）
+            const containerWidth = previewContainer.clientWidth - 28;
+            const containerHeight = previewContainer.clientHeight - 28;
+            const displayAspect = originalWidth / originalHeight;
+            let displayW, displayH;
+
+            if (containerWidth / containerHeight > displayAspect) {
+                displayH = containerHeight;
+                displayW = displayH * displayAspect;
+            } else {
+                displayW = containerWidth;
+                displayH = displayW / displayAspect;
+            }
+
+            previewCanvas.style.width = displayW + 'px';
+            previewCanvas.style.height = displayH + 'px';
+
+            // 更新UI
+            const qInt = parseInt(qualitySlider.value, 10);
+            const desc = getQualityDesc(qInt);
+            qualityDesc.innerHTML = desc.text;
+            qualityValue.textContent = qInt + '%';
+            qualityValue.className = 'value-badge ' + desc.cls;
+
+            currentSizeBadge.textContent = `${originalWidth} × ${originalHeight}`;
+            currentQualityBadge.textContent = `质量 ${qInt}%`;
+
+            // 预估文件大小（基于JPEG导出）
+            try {
+                const dataUrl = previewCanvas.toDataURL('image/jpeg', quality);
+                const base64 = dataUrl.split(',')[1];
+                const size = Math.round(base64.length * 3 / 4);
+                fileSizeValue.textContent = formatSize(size);
+                fileSizeValue.className = 'fs-value ' + (quality < 0.7 ? 'smaller' : (quality > 0.95 ? 'larger' : ''));
+            } catch (e) {
+                fileSizeValue.textContent = '—';
+            }
+        }
+
+        function resetQuality() {
+            if (!originalImage) return;
+            qualitySlider.value = 92;
+            renderPreview();
+        }
+
+        function handleImageFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('请选择有效的图片文件');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    originalImage = img;
+                    originalWidth = img.naturalWidth;
+                    originalHeight = img.naturalHeight;
+
+                    previewCanvas.classList.remove('hidden');
+                    emptyPreview.classList.add('hidden');
+
+                    setControlsEnabled(true);
+
+                    // 默认最高质量
+                    qualitySlider.value = 92;
+
+                    // 更新格式提示
+                    if (file.type === 'image/png') {
+                        formatNote.textContent = '⚠️ 原图为 PNG（无损格式），输出将转为 JPEG（有损压缩）以体现画质变化';
+                    } else if (file.type === 'image/webp') {
+                        formatNote.textContent = 'ℹ️ 原图为 WEBP，输出将转为 JPEG 以便通用下载';
+                    } else {
+                        formatNote.textContent = 'ℹ️ 输出格式：JPEG（有损压缩）';
+                    }
+
+                    renderPreview();
+                };
+                img.onerror = () => {
+                    alert('图片加载失败，请尝试其他文件');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 事件绑定
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageFile(file);
+            }
+            imageInput.value = '';
+        });
+
+        uploadArea.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        qualitySlider.addEventListener('input', () => {
+            if (!originalImage) return;
+            renderPreview();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (!originalImage) return;
+            resetQuality();
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (!originalImage || previewCanvas.classList.contains('hidden')) return;
+            const quality = parseInt(qualitySlider.value, 10) / 100;
+            const link = document.createElement('a');
+            link.download = `quality_${qualitySlider.value}.jpg`;
+            link.href = previewCanvas.toDataURL('image/jpeg', quality);
+            link.click();
+        });
+
+        saveBtn.addEventListener('click', () => {
+            if (!originalImage || previewCanvas.classList.contains('hidden')) return;
+            const quality = parseInt(qualitySlider.value, 10) / 100;
+            const link = document.createElement('a');
+            link.download = `saved_quality_${qualitySlider.value}.jpg`;
+            link.href = previewCanvas.toDataURL('image/jpeg', quality);
+            link.click();
+        });
+
+        // 拖拽支持
+        previewContainer.addEventListener('dragover', (e) => e.preventDefault());
+        previewContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageFile(file);
+            }
+        });
+        uploadArea.addEventListener('dragover', (e) => e.preventDefault());
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageFile(file);
+            }
+        });
+
+        // 阻止触摸滚动
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.card')) {
+                return;
+            }
+            e.preventDefault();
+        }, { passive: false });
+    })();
+</script>
+</body>
+</html>
